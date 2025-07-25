@@ -1,5 +1,6 @@
 ### 2025-07-24
 from random import randint
+from functools import reduce
 
 """
 ## 통합 실습 - 리마인드 복습
@@ -64,6 +65,7 @@ units[2].attack(units[0])
 """
 
 ## User 클래스 기반 커뮤니티 시스템
+"""
 class User:
     def __init__(self, username, login_count, posts, is_banned=False):
         self.username = username
@@ -110,3 +112,69 @@ print()
 sorted_post = sorted(user, key = lambda u : u.posts, reverse = True)
 for u in sorted_post:
     print(u)
+"""
+
+### 2025-07-25
+
+## Item 클래스 기반 재고/장바구니 시스테
+
+class Item:
+    def __init__(self, name, price, stock):
+        self.name = name
+        self.price = price
+        self.stock = stock
+
+    def __str__(self):
+        return f"상품명 : {self.name} | 가격 : {self.price} | 재고 : {self.stock}"
+
+class Cart:
+    def __init__(self):
+        self.items = {}
+    
+    def add_item(self, item, count):
+        try:
+            if count > item.stock:
+                raise ValueError(f"{item.name}의 재고가 부족합니다! (남은 재고: {item.stock})")
+
+            if item.name in self.items:
+                self.items[item.name][1] += count
+            else:
+                self.items[item.name] = [item, count]
+            item.stock -= count
+        except ValueError as e:
+            print(f"[장바구니 오류] {e}")
+
+    def remove_item(self, item_name):
+        try:
+            removed = self.items.pop(item_name)
+            removed[0].stock += removed[1]
+        except KeyError:
+            print(f"{item_name}은 장바구니에 없습니다!")
+        
+    def get_total(self):
+        return reduce(lambda acc, pair: acc + (pair[0].price * pair[1]), self.items.values(), 0)
+    
+    def __str__(self):
+        result = "=== 장바구니 내용 ===\n"
+        for name, (item, count) in self.items.items():
+            result += f"{name}: {count}개 (개당 {item.price}원)\n"
+        result += f"총액: {self.get_total()}원"
+        return result
+
+class DiscountedCart(Cart):
+    def __init__(self, discount_rate):
+        super().__init__()
+        self.discount_rate = discount_rate
+    
+    def get_total(self):
+        return super().get_total() * (1 - self.discount_rate)
+
+pen = Item("펜", 1000, 5)
+notebook = Item("노트", 3000, 10)
+
+cart = DiscountedCart(0.1) # 10퍼 할인
+
+cart.add_item(pen, 2)
+cart.add_item(notebook, 3)
+cart.add_item(pen, 10)
+print(cart)
